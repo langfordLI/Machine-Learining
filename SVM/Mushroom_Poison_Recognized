@@ -1,0 +1,35 @@
+import pandas as pd
+import numpy as np
+
+mush_df = pd.read_csv('mushrooms.csv')
+mush_df_encoded = pd.get_dummies(mush_df)
+print(mush_df.head())
+print(mush_df_encoded)
+X_mush = mush_df_encoded.iloc[:, 2:]
+y_mush = mush_df_encoded.iloc[:, 1]
+
+from sklearn.svm import SVC
+from sklearn.decomposition import PCA
+from sklearn.pipeline import  make_pipeline
+
+pca = PCA(n_components=117, whiten = True, random_state=42)
+svc = SVC(kernel = 'linear', class_weight='balanced')
+model = make_pipeline(pca, svc)
+
+from sklearn.model_selection import train_test_split
+Xtrain, Xtest, ytrain, ytest = train_test_split(X_mush, y_mush,
+                                                random_state=41)
+# cross validation
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {'svc__C': [1, 5, 10, 50]} # note that svc_ and _C
+grid = GridSearchCV(model, param_grid)
+
+grid.fit(Xtrain, ytrain)
+print(grid.best_params_)
+
+model = grid.best_estimator_
+yfit = model.predict(Xtest)
+
+from sklearn.metrics import classification_report
+print(classification_report(ytest, yfit))
